@@ -1,0 +1,21 @@
+{
+  "name": "sysbackend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/hapi": "^21.2.1",
+    "@hapi/inert": "^7.0.1",
+    "@hapi/jwt": "^3.1.0",
+    "@hapi/vision": "^7.0.1",
+    "hapi-swagger": "^15.0.0",
+    "joi": "^17.7.1",
+    "jsonwebtoken": "^9.0.0"
+  }
+}
