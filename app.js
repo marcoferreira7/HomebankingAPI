@@ -14,10 +14,14 @@ const JWT_SECRET = "some_shared_secret";
 
 const init = async () => {
 
+    // Configuração Hapi
+
     const server = Hapi.server({
         port: 3000,
         host: 'localhost'
     });
+
+    // Configuração Swagger e Autorização JWT
 
     const swaggerOptions = {
         info: {
@@ -34,7 +38,7 @@ const init = async () => {
         security: [{ jwt: [] }],
     };
 
-    // swagger
+    // Configuração dos Plug-ins Swagger
 
     await server.register([
         Inert,
@@ -45,7 +49,7 @@ const init = async () => {
         }
     ]);
 
-    // jwt - retorna um token e chama a funçao validate para retornar token
+    // Configuração JWT - Retorna um token e chama a funçao Validate para retornar Token
 
     await server.register(Jwt);
 
@@ -61,11 +65,11 @@ const init = async () => {
         }
     });
 
-    // Set the strategy
+    // Definir tipo de autenticação JWT
 
     server.auth.default('my_jwt_strategy');
 
-    //
+    // Configuração do Servidor
 
     server.route({
         method: 'GET',
@@ -79,7 +83,9 @@ const init = async () => {
         }
     });
 
-    // cria na base de dados
+    /**
+    * Rota Subscribe - Cria Utilizador na Base de Dados (test.json)
+    */
 
     server.route({
         method: 'POST',
@@ -106,25 +112,29 @@ const init = async () => {
                 basededadosstring = fs.readFileSync('test.json', 'utf8');
                 basededados = JSON.parse(basededadosstring);
                 if (request.payload.email === basededados.email) {
+                    // Verifica se o email já existe
                     return 'Ja existe';
                 } else {
-                    // utilizar JSON.stringify para transformar o ficheiro JSON em texto
+                    // Utilizar JSON.stringify para transformar o ficheiro JSON em texto
                     const data = fs.writeFileSync('test.json', JSON.stringify(user_para_gravar), { flag: 'w+' });
                     return 'Guardado com sucesso';
                 }
-                // arquivo escrito com sucesso
             } catch (err) {
                 console.log(err);
             }
         }
     });
 
-    // retorna token jwt se o user existir
+    /**
+     * Rota Login - Login do Utilizador criado (retorna token JWT se o utilizador existir)
+     */
 
     server.route({
         method: 'POST',
         path: '/login',
         options: {
+            description: 'Login do Utilizador criado',
+            notes: 'Verificar se os valores do utilizador coincidem (email e password), retorna token se o utilizador existir',
             auth: false,
             tags: ['api'],
             validate: {
@@ -139,11 +149,13 @@ const init = async () => {
             let basededadosstring;
             try {
                 basededadosstring = fs.readFileSync('test.json', 'utf8');
-                // passar de string para JSON
+                // Passar de string para JSON
                 basededados = JSON.parse(basededadosstring);
                 if (request.payload.email === basededados.email) {
                     if (request.payload.password === basededados.password) {
+                        // Verifica se os valores coincidem
                         const jwt = jsonwebtoken.sign({ sub: basededados.email }, JWT_SECRET);
+                        // Retorna token JWT se o utilizador existir
                         return { jwt };
                     } else {
                         return 'Password errada';
@@ -158,12 +170,16 @@ const init = async () => {
         }
     });
 
-    // Retorna os fundos
+    /**
+     * Rota Funds (GET) - Retorna o valor dos fundos do utilizador
+     */
 
     server.route({
         method: 'GET',
         path: '/funds',
         options: {
+            description: 'Retorna o valor dos fundos da conta do utilizador',
+            notes: 'Acesso à conta criada e verifica os fundos da mesma',
             tags: ['api'],
         },
         handler: (request, h) => {
@@ -171,7 +187,7 @@ const init = async () => {
             let basededadosstring;
             try {
                 basededadosstring = fs.readFileSync('test.json', 'utf8');
-                // passar de string para JSON
+                // Passar de string para JSON
                 basededados = JSON.parse(basededadosstring);
                 return basededados.fundos;
             }
@@ -181,12 +197,16 @@ const init = async () => {
         }
     });
 
-    // Depositar fundos
+    /**
+     * Rota Funds (PUT) - Deposita o valor que o utilizador pretende na conta
+     */
 
     server.route({
         method: 'PUT',
         path: '/funds',
         options: {
+            description: 'Depositar o valor que o utilizador pretende na conta',
+            notes: 'Verifica se os valores do utilizador coincidem (email), insere o valor pretendido se o utilizador existir',
             tags: ['api'],
             validate: {
                 payload: Joi.object({
@@ -200,9 +220,10 @@ const init = async () => {
             let basededadosstring;
             try {
                 basededadosstring = fs.readFileSync('test.json', 'utf8');
-                // passar de string para JSON
+                // Passar de string para JSON
                 basededados = JSON.parse(basededadosstring);
                 if (request.payload.email === basededados.email) {
+                    // Adiciona o valor de fundos à conta do utilizador
                     basededados.fundos = basededados.fundos + request.payload.fundos;
                     const data = fs.writeFileSync('test.json', JSON.stringify(basededados), { flag: 'w+' });
                     return 'Fundos adicionados!';
@@ -215,12 +236,16 @@ const init = async () => {
         }
     });
 
-    // Retirar fundos
+    /**
+     * Rota Funds (DELETE) - Retira o valor que o utilizador pretende da conta
+     */
 
     server.route({
         method: 'DELETE',
         path: '/funds',
         options: {
+            description: 'Retira o valor que o utilizador pretende da conta',
+            notes: 'Verifica se os valores do utilizador coincidem (email) e retira o valor pretendido se o utilizador existir. Verifica se a quantia não é maior do que o total disponível',
             tags: ['api'],
             validate: {
                 payload: Joi.object({
@@ -234,12 +259,14 @@ const init = async () => {
             let basededadosstring;
             try {
                 basededadosstring = fs.readFileSync('test.json', 'utf8');
-                // passar de string para JSON
+                // Passar de string para JSON
                 basededados = JSON.parse(basededadosstring);
                 if (request.payload.email === basededados.email) {
+                    // Verifica se a quantia não é maior do que o total disponível
                     if (request.payload.fundos > basededados.fundos) {
                         return 'Saldo insuficiente';
                     } else {
+                        // Retira o valor que o utilizador pretende
                         basededados.fundos = basededados.fundos - request.payload.fundos;
                         const data = fs.writeFileSync('test.json', JSON.stringify(basededados), { flag: 'w+' })
                     }
